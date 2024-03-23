@@ -4,12 +4,21 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UserSecretsId>6dfab849-e1b5-409e-a4db-bceaf8149502</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Battleforged.ArmyService.Application\Battleforged.ArmyService.Application.csproj" />
       <ProjectReference Include="..\Battleforged.ArmyService.Domain\Battleforged.ArmyService.Domain.csproj" />
       <ProjectReference Include="..\Battleforged.ArmyService.Infrastructure\Battleforged.ArmyService.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FastEndpoints" Version="5.23.0" />
+      <PackageReference Include="FastEndpoints.Security" Version="5.23.0" />
+      <PackageReference Include="FastEndpoints.Swagger" Version="5.23.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.3" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 
 </Project>

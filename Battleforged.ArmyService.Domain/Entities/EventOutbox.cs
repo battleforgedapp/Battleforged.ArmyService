@@ -15,7 +15,7 @@ public sealed class EventOutbox {
     /// The name of the event that is being sent to our queue.
     /// </summary>
     public string EventName { get; set; } = string.Empty;
-
+    
     /// <summary>
     /// The json data of that message that we want to publish.
     /// </summary>
