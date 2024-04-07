@@ -28,6 +28,15 @@ var builder = WebApplication.CreateBuilder(args);
         typeof(FetchArmiesPagedQuery).Assembly
     ));
     
+    // configure the cors policy for development
+    builder.Services.AddCors(cfg => {
+        cfg.AddDefaultPolicy(plc => plc
+            .WithOrigins(builder.Configuration.GetValue<string>("AllowedHosts")!.Split("|"))
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+        );
+    });
+    
     // configure our authentication
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -68,6 +77,7 @@ var builder = WebApplication.CreateBuilder(args);
     };
     
     // configure out endpoints
+    builder.Services.AddAuthorization();
     builder.Services.AddFastEndpoints();
     builder.Services.SwaggerDocument();
 }
@@ -78,6 +88,7 @@ var app = builder.Build();
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseCors();
     app
         .UseDefaultExceptionHandler()
         .UseFastEndpoints(cfg => {
