@@ -4,10 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Battleforged.ArmyService.Infrastructure.Database.Repositories; 
 
-public sealed class BattleSizeRepository(AppDbContext ctx) : IBattleSizeRepository {
+public sealed class BattleSizeRepository(IDbContextFactory<AppDbContext> ctx) : IBattleSizeRepository {
 
-    public IQueryable<BattleSize> AsQueryable() => ctx.BattleSizes.AsQueryable();
+    private readonly AppDbContext _ctx = ctx.CreateDbContext();
+    
+    public IQueryable<BattleSize> AsQueryable() 
+        => _ctx.BattleSizes.AsQueryable();
+    
+    public async ValueTask DisposeAsync()
+        => await _ctx.DisposeAsync();
     
     public async Task<IEnumerable<BattleSize>> FetchAsync(CancellationToken ct = default)
-        => await ctx.BattleSizes.ToListAsync(ct);
+        => await _ctx.BattleSizes.ToListAsync(ct);
 }

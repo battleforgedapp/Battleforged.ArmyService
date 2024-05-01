@@ -6,7 +6,7 @@ namespace Battleforged.ArmyService.Domain.Repositories;
 /// Primary repository for fetching, inserting and managing the outbox table
 /// and event outbox domain model.
 /// </summary>
-public interface IEventOutboxRepository {
+public interface IEventOutboxRepository : IAsyncDisposable {
 
     /// <summary>
     /// Adds the domain model for the event to the current data storage transaction.

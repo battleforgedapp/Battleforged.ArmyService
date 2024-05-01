@@ -4,18 +4,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Battleforged.ArmyService.Infrastructure.Database.Repositories; 
 
-public sealed class DetachmentRepository(AppDbContext ctx) : IDetachmentRepository {
+public sealed class DetachmentRepository(IDbContextFactory<AppDbContext> ctx) : IDetachmentRepository {
 
+    private readonly AppDbContext _ctx = ctx.CreateDbContext();
+    
     public async Task<int> AddRangeAsync(IReadOnlyList<Detachment> entities, CancellationToken ct = default) {
-        await ctx.Detachments.AddRangeAsync(entities, ct);
-        await ctx.SaveChangesAsync(ct);
+        await _ctx.Detachments.AddRangeAsync(entities, ct);
+        await _ctx.SaveChangesAsync(ct);
         return entities.Count;
     }
 
-    public IQueryable<Detachment> AsQueryable() => ctx.Detachments.AsQueryable();
+    public IQueryable<Detachment> AsQueryable() => _ctx.Detachments.AsQueryable();
 
+    public async ValueTask DisposeAsync() {
+        await _ctx.DisposeAsync();
+    }
+    
     public async Task<IEnumerable<Detachment>> FetchDetachmentsForArmyAsync(Guid armyId, CancellationToken ct = default) {
-        return await ctx.Detachments
+        return await _ctx.Detachments
             .OrderBy(x => x.DetachmentName)
             .Where(x => x.ArmyId == armyId)
             .ToListAsync(ct);

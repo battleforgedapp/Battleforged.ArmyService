@@ -11,7 +11,9 @@ public static class HostExtensions {
         var serviceProvider = scope.ServiceProvider;
         
         // run any migrations and do any checks
-        var ctx = serviceProvider.GetRequiredService<AppDbContext>();
+        var factory = serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+        using var ctx = factory.CreateDbContext();
+        
         if (ctx!.Database!.ProviderName!.Contains("Sqlite")) {
             // this makes sure our test-db that is local is created with all latest changes
             ctx.Database.EnsureCreated();

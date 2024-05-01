@@ -1,18 +1,23 @@
 ﻿using Battleforged.ArmyService.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Battleforged.ArmyService.Infrastructure.Database.Repositories;
 
 /// <inheritdoc cref="IUnitOfWork" />
-public sealed class UnitOfWork(AppDbContext ctx) : IUnitOfWork, IDisposable {
+public sealed class UnitOfWork(IDbContextFactory<AppDbContext> ctx) : IUnitOfWork, IDisposable {
     
     private IDbContextTransaction? _transaction;
+    private readonly AppDbContext _ctx = ctx.CreateDbContext();
 
-    public void Dispose() => _transaction?.Dispose();
+    public void Dispose() {
+        _transaction?.Dispose();
+        _ctx?.Dispose();
+    }
 
     /// <inheritdoc cref="IUnitOfWork.BeginTransactionAsync" />
     public async Task BeginTransactionAsync(CancellationToken ct = default) {
-        _transaction = await ctx.Database.BeginTransactionAsync(ct);
+        _transaction = await _ctx.Database.BeginTransactionAsync(ct);
     }
 
     /// <inheritdoc cref="IUnitOfWork.CommitAsync" />

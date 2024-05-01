@@ -3,7 +3,7 @@ using Battleforged.ArmyService.Domain.Entities;
 
 namespace Battleforged.ArmyService.Domain.Repositories;
 
-public interface IArmyRepository {
+public interface IArmyRepository : IAsyncDisposable {
 
     Task<Army> AddAsync(Army entity, CancellationToken ct = default);
 

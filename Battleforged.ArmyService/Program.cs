@@ -23,7 +23,7 @@ var builder = WebApplication.CreateBuilder(args);
     System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
     
     // add our db context connection
-    builder.Services.AddDbContext<AppDbContext>(cfg => {
+    builder.Services.AddPooledDbContextFactory<AppDbContext>(cfg => {
         // TODO: production db connection string when running in prod
         cfg.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
         //cfg.UseSqlite("Data Source=LocalDatabase.db");
@@ -103,7 +103,7 @@ var builder = WebApplication.CreateBuilder(args);
     // configure our graph server that deals with the majority of requests & queries
     builder.Services
         .AddGraphQLServer()
-        .RegisterDbContext<AppDbContext>(DbContextKind.Pooled)
+        .RegisterDbContext<AppDbContext>(DbContextKind.Resolver)
         .AddAuthorization()
         .AddSorting()
         .AddQueryType(q => q.Name("Query"))

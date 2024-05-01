@@ -7,34 +7,39 @@ using Microsoft.EntityFrameworkCore;
 namespace Battleforged.ArmyService.Infrastructure.Database.Repositories;
 
 /// <inheritdoc cref="IArmyRepository" />
-public sealed class ArmyRepository(AppDbContext ctx) : IArmyRepository {
+public sealed class ArmyRepository(IDbContextFactory<AppDbContext> ctx) : IArmyRepository {
 
+    private readonly AppDbContext _ctx = ctx.CreateDbContext();
+    
     /// <inheritdoc cref="IArmyRepository.AddAsync" />
     public async Task<Army> AddAsync(Army entity, CancellationToken ct = default) {
-        await ctx.Armies.AddAsync(entity, ct);
-        await ctx.SaveChangesAsync(ct);
+        await _ctx.Armies.AddAsync(entity, ct);
+        await _ctx.SaveChangesAsync(ct);
         return entity;
     }
 
     /// <inheritdoc cref="IArmyRepository.AddRangeAsync" />
     public async Task<int> AddRangeAsync(IReadOnlyList<Army> entities, CancellationToken ct = default) {
-        await ctx.Armies.AddRangeAsync(entities, ct);
-        await ctx.SaveChangesAsync(ct);
+        await _ctx.Armies.AddRangeAsync(entities, ct);
+        await _ctx.SaveChangesAsync(ct);
         return entities.Count;
     }
 
     /// <inheritdoc cref="IArmyRepository.AsQueryable" />
-    public IQueryable<Army> AsQueryable() => ctx.Armies.AsQueryable();
+    public IQueryable<Army> AsQueryable() => _ctx.Armies.AsQueryable();
     
     /// <inheritdoc cref="IArmyRepository.Delete" />
     public void Delete(Army entity) {
         entity.DeletedDate = DateTime.UtcNow;
-        ctx.Armies.Update(entity);
+        _ctx.Armies.Update(entity);
     }
+    
+    /// <inheritdoc cref="IArmyRepository.DisposeAsync" />
+    public async ValueTask DisposeAsync() => await _ctx.DisposeAsync();
     
     /// <inheritdoc cref="IArmyRepository.FetchPagedAsync" />
     public async Task<IPagedResult<Guid, Army>> FetchPagedAsync(Guid? cursor, int pageSize, CancellationToken ct = default) {
-        var query = ctx.Armies
+        var query = _ctx.Armies
             .Where(x => (cursor == null || x.Id >= cursor.Value))
             .OrderBy(x => x.Name);
 
@@ -52,6 +57,8 @@ public sealed class ArmyRepository(AppDbContext ctx) : IArmyRepository {
 
     /// <inheritdoc cref="IArmyRepository.GetByIdAsync" />
     public async Task<Army?> GetByIdAsync(Guid armyId, CancellationToken ct = default) {
-        return await ctx.Armies.FirstOrDefaultAsync(x => x.Id == armyId, ct);
+        return await _ctx.Armies.FirstOrDefaultAsync(x => x.Id == armyId, ct);
     }
+
+    
 }
