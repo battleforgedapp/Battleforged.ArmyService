@@ -111,6 +111,7 @@ var builder = WebApplication.CreateBuilder(args);
         .AddType<BattleSizeQueries>()
         .AddType<DetachmentQueries>()
         .AddType<UnitQueries>()
+        .AddTypeExtension<DetachmentNodes>()
         .AddTypeExtension<UnitNodes>();
 }
 

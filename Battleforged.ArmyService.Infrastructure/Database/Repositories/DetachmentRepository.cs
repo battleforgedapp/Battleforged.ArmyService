@@ -26,4 +26,8 @@ public sealed class DetachmentRepository(IDbContextFactory<AppDbContext> ctx) : 
             .Where(x => x.ArmyId == armyId)
             .ToListAsync(ct);
     }
+
+    public async Task<Detachment?> GetByIdAsync(Guid detachmentId, CancellationToken ct = default) {
+        return await _ctx.Detachments.FirstOrDefaultAsync(x => x.Id == detachmentId, ct);
+    }
 }
