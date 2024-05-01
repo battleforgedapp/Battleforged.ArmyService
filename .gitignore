@@ -401,3 +401,6 @@ FodyWeavers.xsd
 # Remove LocalDb Files
 *.db
 *.db-*
+
+# Mac Files
+.DS_STORE

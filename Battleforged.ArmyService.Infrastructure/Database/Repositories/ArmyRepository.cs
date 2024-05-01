@@ -16,6 +16,16 @@ public sealed class ArmyRepository(AppDbContext ctx) : IArmyRepository {
         return entity;
     }
 
+    /// <inheritdoc cref="IArmyRepository.AddRangeAsync" />
+    public async Task<int> AddRangeAsync(IReadOnlyList<Army> entities, CancellationToken ct = default) {
+        await ctx.Armies.AddRangeAsync(entities, ct);
+        await ctx.SaveChangesAsync(ct);
+        return entities.Count;
+    }
+
+    /// <inheritdoc cref="IArmyRepository.AsQueryable" />
+    public IQueryable<Army> AsQueryable() => ctx.Armies.AsQueryable();
+    
     /// <inheritdoc cref="IArmyRepository.Delete" />
     public void Delete(Army entity) {
         entity.DeletedDate = DateTime.UtcNow;

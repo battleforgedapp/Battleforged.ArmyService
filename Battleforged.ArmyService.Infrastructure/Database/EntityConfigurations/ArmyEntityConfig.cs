@@ -10,20 +10,20 @@ public static class ArmyEntityConfig {
 
     public static void RegisterArmyEntity(this ModelBuilder builder) {
         builder.Entity<Army>(cfg => {
-            // configure the base table properties
+            // configure the table properties
             cfg.ToTable("armies");
             cfg.HasKey(pk => pk.Id);
-            
+
+            // configure the query filters
+            cfg.HasQueryFilter(q => q.DeletedDate == null);
+
             // configure the columns
             cfg.Property(p => p.Id)
                 .HasColumnName("army_id")
-                .HasColumnType("char(36)")
                 .IsRequired();
-
+            
             cfg.Property(p => p.ParentArmyId)
-                .HasColumnName("parent_army_id")
-                .HasColumnType("char(36)")
-                .HasDefaultValue(null)
+                .HasColumnName("army_parent_id")
                 .IsRequired(false);
 
             cfg.Property(p => p.Name)
@@ -31,21 +31,34 @@ public static class ArmyEntityConfig {
                 .HasMaxLength(256)
                 .IsRequired();
 
+            cfg.Property(p => p.Type)
+                .HasColumnName("army_type")
+                .IsRequired();
+
             cfg.Property(p => p.CreatedDate)
-                .HasColumnName("created_date_utc")
-                .HasColumnType("datetime(6)")
-                .HasDefaultValue(DateTime.UtcNow)
+                .HasColumnName("created_date")
                 .IsRequired();
 
             cfg.Property(p => p.DeletedDate)
-                .HasColumnName("deleted_date_utc")
-                .HasColumnType("datetime(6)")
-                .HasDefaultValue(null)
+                .HasColumnName("deleted_date")
                 .IsRequired(false);
             
-            // configure how the base query run
-            // this by default will filter out any entities that have been "deleted"
-            cfg.HasQueryFilter(x => x.DeletedDate == null);
+            // configure relationships
+            cfg.HasOne<Army>()
+                .WithMany()
+                .HasPrincipalKey(pk => pk.Id)
+                .HasForeignKey(fk => fk.ParentArmyId)
+                .IsRequired(false);
+            
+            cfg.HasMany<Unit>()
+                .WithOne()
+                .HasPrincipalKey(pk => pk.Id)
+                .HasForeignKey(fk => fk.ArmyId);
+
+            cfg.HasMany<Detachment>()
+                .WithOne()
+                .HasPrincipalKey(pk => pk.Id)
+                .HasForeignKey(fk => fk.ArmyId);
         });
     }
 }

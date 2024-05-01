@@ -28,18 +28,15 @@ public static class EventOutboxEntityConfig {
 
             cfg.Property(p => p.EventData)
                 .HasColumnName("event_data")
-                .HasColumnType("mediumtext")
+                .HasColumnType("text")
                 .IsRequired();
 
             cfg.Property(p => p.CreatedDate)
                 .HasColumnName("created_date")
-                .HasColumnType("datetime(6)")
-                .HasDefaultValue(DateTime.UtcNow)
                 .IsRequired();
 
             cfg.Property(p => p.SentDate)
                 .HasColumnName("sent_date")
-                .HasColumnType("datetime(6)")
                 .HasDefaultValue(null)
                 .IsRequired(false);
 

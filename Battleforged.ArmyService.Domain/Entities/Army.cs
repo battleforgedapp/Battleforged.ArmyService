@@ -1,4 +1,6 @@
-﻿namespace Battleforged.ArmyService.Domain.Entities;
+﻿using Battleforged.ArmyService.Domain.Enums;
+
+namespace Battleforged.ArmyService.Domain.Entities;
 
 /// <summary>
 /// Represents the very top level of a 40k army and shows the base army data, such as the name.
@@ -20,6 +22,11 @@ public sealed class Army {
     /// The name of the army to display.
     /// </summary>
     public string Name { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The category/type of army it is. Xenos, Imperium, Chaos, etc.
+    /// </summary>
+    public ArmyTypes Type { get; set; }
     
     /// <summary>
     /// The date that the domain record was created. Mostly for internal use.

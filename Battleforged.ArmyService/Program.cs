@@ -1,9 +1,13 @@
 using System.Security.Claims;
-using Battleforged.ArmyService.Application.Armies.Queries;
+using Battleforged.ArmyService.Application.Armies.Queries.GetArmies;
+using Battleforged.ArmyService.Domain.Abstractions;
 using Battleforged.ArmyService.Domain.Repositories;
+using Battleforged.ArmyService.Graph.Nodes;
+using Battleforged.ArmyService.Graph.Queries;
 using Battleforged.ArmyService.Helpers;
 using Battleforged.ArmyService.Infrastructure.Database;
 using Battleforged.ArmyService.Infrastructure.Database.Repositories;
+using Battleforged.ArmyService.Infrastructure.Spreadsheets;
 using Battleforged.ArmyService.Json;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -15,17 +19,23 @@ using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 {
+    // register text-encoding for using the excel parser
+    System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+    
     // add our db context connection
     builder.Services.AddDbContext<AppDbContext>(cfg => {
         // TODO: production db connection string when running in prod
         cfg.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-        cfg.UseSqlite("Data Source=LocalDatabase.db");
+        //cfg.UseSqlite("Data Source=LocalDatabase.db");
+        cfg.UseNpgsql(builder.Configuration.GetConnectionString("Default"), opts => {
+            opts.MigrationsAssembly("Battleforged.ArmyService");
+        });
     });
     
     // add our MediatR cqrs pipeline
     builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(
         typeof(Program).Assembly,
-        typeof(FetchArmiesPagedQuery).Assembly
+        typeof(GetArmiesQuery).Assembly
     ));
     
     // configure the cors policy for development
@@ -62,8 +72,16 @@ var builder = WebApplication.CreateBuilder(args);
     
     // setup our repositories
     builder.Services.AddScoped<IArmyRepository, ArmyRepository>();
+    builder.Services.AddScoped<IBattleSizeRepository, BattleSizeRepository>();
+    builder.Services.AddScoped<IDetachmentEnhancementRepository, DetachmentEnhancementRepository>();
+    builder.Services.AddScoped<IDetachmentRepository, DetachmentRepository>();
     builder.Services.AddScoped<IEventOutboxRepository, EventOutboxRepository>();
+    builder.Services.AddScoped<IUnitGroupingRepository, UnitGroupingRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddScoped<IUnitRepository, UnitRepository>();
+    
+    // setup our services
+    builder.Services.AddScoped<ISpreadsheetImporter, ExcelSpreadsheetReader>();
     
     // handle our guid convertors a little better
     // configure newtonsoft to work better with fast-endpoints by configuring the settings better!
@@ -76,10 +94,24 @@ var builder = WebApplication.CreateBuilder(args);
         }
     };
     
-    // configure out endpoints
-    builder.Services.AddAuthorization();
-    builder.Services.AddFastEndpoints();
-    builder.Services.SwaggerDocument();
+    // configure our endpoints
+    // this mainly handles files and form uploads where graphql is not best suited
+    builder.Services
+        .AddFastEndpoints()
+        .SwaggerDocument();
+    
+    // configure our graph server that deals with the majority of requests & queries
+    builder.Services
+        .AddGraphQLServer()
+        .RegisterDbContext<AppDbContext>(DbContextKind.Pooled)
+        .AddAuthorization()
+        .AddSorting()
+        .AddQueryType(q => q.Name("Query"))
+        .AddType<ArmyQueries>()
+        .AddType<BattleSizeQueries>()
+        .AddType<DetachmentQueries>()
+        .AddType<UnitQueries>()
+        .AddTypeExtension<UnitNodes>();
 }
 
 var app = builder.Build();
@@ -89,9 +121,9 @@ var app = builder.Build();
     app.UseAuthentication();
     app.UseAuthorization();
     app.UseCors();
-    app
-        .UseDefaultExceptionHandler()
-        .UseFastEndpoints(cfg => {
+    app.UseEndpoints(e => {
+        e.MapGraphQL(); //.RequireAuthorization();
+        e.MapFastEndpoints(cfg => {
             cfg.Versioning.Prefix = "v";
             cfg.Serializer.ResponseSerializer = (rsp, dto, cType, jCtx, ct) => {
                 rsp.ContentType = cType;
@@ -101,8 +133,8 @@ var app = builder.Build();
                 using var reader = new StreamReader(req.Body);
                 return JsonConvert.DeserializeObject(await reader.ReadToEndAsync(), tDto);
             };
-        })
-        .UseSwaggerGen();
+        });
+    });
 }
 
 // run our web-app!
